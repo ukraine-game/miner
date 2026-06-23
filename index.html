@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мінувальник - ELITA RP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f0f0f;
+            --panel-bg: #151515;
+            --input-bg: #1a1a1a;
+            --text-grey: #8a8a8a;
+            --text-white: #ffffff;
+            --accent-red: #ff3333;
+            --accent-green: #00cc44;
+            --border-radius: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: url('img/background.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text-white);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Кнопка ESC у лівому верхньому куті (виправлено розмір) */
+        .esc-btn {
+            position: fixed;
+            top: 25px;
+            left: 25px;
+            width: 118px; /* Правильна ширина */
+            height: 18px; /* Правильна висота */
+            cursor: pointer;
+            z-index: 50;
+            transition: transform 0.2s;
+        }
+        .esc-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Віджет глобального балансу */
+        .global-balance-widget {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background: rgba(20, 20, 20, 0.85);
+            backdrop-filter: blur(5px);
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            font-size: 14px;
+            color: var(--text-grey);
+            z-index: 50;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .global-balance-widget span {
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        /* Головний ігровий контейнер */
+        .game-wrapper {
+            background-image: url('img/bg.png');
+            background-size: cover;
+            background-position: center;
+            background-color: rgba(20, 20, 20, 0.95);
+            border-radius: 16px;
+            padding: 30px;
+            display: flex;
+            gap: 40px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* --- ЛІВА ПАНЕЛЬ --- */
+        .left-panel {
+            flex: 0 0 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .balance { text-align: right; width: 100%; }
+        .balance span { 
+            display: block; 
+            font-size: 11px; 
+            color: var(--text-grey); 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            margin-bottom: 6px; /* Піднято текст трохи вище */
+        }
+        .balance-value { display: flex; align-items: center; justify-content: flex-end; gap: 5px; font-size: 20px; font-weight: 700; }
+        .chip-icon { color: var(--accent-red); font-size: 16px; }
+
+        .input-group { display: flex; flex-direction: column; gap: 8px; }
+        .input-label { font-size: 12px; color: var(--text-grey); }
+        .input-box {
+            background-color: var(--input-bg);
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            height: 50px;
+            border: 1px solid transparent;
+            transition: border 0.2s;
+        }
+        .input-box:focus-within { border-color: #444; }
+        .input-box .prefix { margin-right: 10px; display: flex; align-items: center; }
+        .input-box input { background: transparent; border: none; color: white; font-size: 16px; font-weight: 600; width: 100%; outline: none; }
+        .input-box input::-webkit-outer-spin-button, .input-box input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        .controls { display: flex; gap: 5px; }
+        .ctrl-btn { background-color: #222; border: none; color: var(--text-grey); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; transition: 0.2s; }
+        .ctrl-btn:hover { background-color: #333; color: white; }
+        .ctrl-btn.active-bomb { background-color: var(--accent-red); color: white; }
+        .ctrl-btn.max { color: var(--accent-red); }
+
+        .stats-row { display: flex; gap: 15px; }
+        .stat-box { flex: 1; background-color: var(--input-bg); border-radius: var(--border-radius); padding: 15px; display: flex; flex-direction: column; position: relative; height: 85px; }
+        .stat-box span { font-size: 11px; color: var(--text-grey); margin-bottom: auto; }
+        .stat-value { background-color: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; font-size: 14px; font-weight: 600; width: fit-content; }
+        .stat-value.green { color: #00ff66; background-color: rgba(0, 255, 102, 0.1); }
+        .stat-value.red { color: #ff3333; background-color: rgba(255, 51, 51, 0.1); }
+        .stat-img { position: absolute; right: 10px; bottom: 10px; width: 40px; height: 40px; object-fit: contain; }
+
+        .start-btn {
+            width: 100%;
+            height: 60px;
+            border: none;
+            border-radius: var(--border-radius);
+            background-image: url('img/btn_start.png');
+            background-size: cover;
+            background-position: center;
+            background-color: var(--accent-green);
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 5px;
+        }
+        .start-btn:hover { background-image: url('img/btn_start_h.png'); filter: brightness(1.1); }
+        .start-btn span { color: white; font-size: 15px; font-weight: 700; text-transform: uppercase; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+
+        /* --- ПРАВА ПАНЕЛЬ (ІГРОВЕ ПОЛЕ) --- */
+        .right-panel {
+            flex: 1 1 400px;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+        .grid-item { aspect-ratio: 1 / 1; background-image: url('img/block_1.png'); background-size: cover; background-position: center; background-color: #2a2a2a; border-radius: 8px; cursor: default; transition: transform 0.1s, filter 0.1s; }
+        .game-active .grid-item.unopened { background-image: url('img/block_2.png') !important; cursor: pointer; }
+        .game-active .grid-item.unopened:hover { background-image: url('img/block_3.png') !important; transform: scale(1.03); }
+        .grid-item.has-ruby { background-image: url('img/block_4.png') !important; transform: scale(1); cursor: default; }
+        .grid-item.has-bomb { background-image: url('img/block_5.png') !important; transform: scale(1); cursor: default; animation: explode 0.3s ease-in-out; }
+        @keyframes explode { 0% { transform: scale(1); filter: brightness(2); } 50% { transform: scale(1.1); } 100% { transform: scale(1); filter: brightness(1); } }
+
+        /* --- СЛАЙДЕР МНОЖНИКІВ --- */
+        .multiplier-container { background-color: rgba(0,0,0,0.3); border-radius: var(--border-radius); padding: 5px; display: flex; align-items: center; }
+        .multiplier-slider { display: flex; overflow-x: auto; scroll-behavior: smooth; width: 100%; gap: 5px; padding: 5px; cursor: grab; -ms-overflow-style: none; scrollbar-width: none; }
+        .multiplier-slider::-webkit-scrollbar { display: none; }
+        .m-item { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 15px; border-radius: 8px; opacity: 0.4; transition: 0.3s ease; min-width: 75px; }
+        .m-item.active { opacity: 1; background-color: rgba(255, 255, 255, 0.08); transform: scale(1.05); }
+        .m-item.passed { opacity: 0.7; }
+        .m-top { font-size: 14px; font-weight: 700; color: white; display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
+        .m-bottom { font-size: 11px; color: var(--text-grey); }
+
+        /* --- ОВЕРЛЕЙ ПРОФІЛЮ (РОЗМИТТЯ) --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-overlay.active { display: flex; }
+        
+        .modal-content {
+            background: #1c1c1c; /* Темно-сірий колір як на фото */
+            border-radius: 12px;
+            width: 440px;
+            max-width: 95%;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        .menu-btn {
+            background: #2a2a2a; border: none; color: white; padding: 15px;
+            border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 600; transition: 0.2s; margin-bottom: 10px;
+        }
+        .menu-btn:hover { background: #333; }
+        
+        /* Специфічні стилі меню як на скріншоті */
+        .ex-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; }
+        .ex-subtitle { color: #888; font-size: 12px; margin-bottom: 5px; }
+        .ex-title { font-size: 22px; font-weight: 600; color: white; }
+        .ex-close { 
+            width: 32px; height: 32px; background: #252525; border-radius: 6px; 
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; color: #888; transition: 0.2s; 
+        }
+        .ex-close:hover { background: #333; color: white; }
+
+        .ex-inputs-wrapper { position: relative; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        
+        .ex-input-box {
+            background: #141414;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .ex-icon-wrapper { font-size: 24px; display: flex; align-items: center; justify-content: center; width: 30px;}
+        .ex-input-content { display: flex; flex-direction: column; width: 100%; }
+        .ex-input-content label { color: #777; font-size: 11px; margin-bottom: 4px; }
+        .ex-input-content input { 
+            background: transparent; border: none; color: white; 
+            font-size: 20px; font-weight: 700; outline: none; width: 100%; 
+        }
+        
+        /* Кругла кнопка обміну між блоками */
+        .ex-swap-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 38px;
+            height: 38px;
+            background: #333;
+            border: 3px solid #1c1c1c; /* Колір фону модалки щоб зімітувати розрив */
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #ccc;
+            font-size: 16px;
+            transition: 0.2s;
+            z-index: 2;
+        }
+        .ex-swap-btn:hover { background: #444; color: white; }
+
+        /* Блоки Купівля / Продаж */
+        .ex-rates-wrapper { display: flex; gap: 15px; margin-bottom: 30px; }
+        .ex-rate-box { 
+            flex: 1; padding: 15px; border-radius: 8px; border: 1px solid transparent; 
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .ex-rate-box.buy { 
+            background: linear-gradient(135deg, rgba(30, 45, 25, 0.6), rgba(20, 20, 20, 0.8)); 
+            border-color: rgba(0, 255, 0, 0.05); 
+        }
+        .ex-rate-box.sell { 
+            background: linear-gradient(135deg, rgba(45, 25, 25, 0.6), rgba(20, 20, 20, 0.8)); 
+            border-color: rgba(255, 0, 0, 0.05); 
+        }
+        .rate-title { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .rate-val { color: white; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+
+        .ex-submit-btn {
+            background-color: #17a93a;
+            color: white;
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .ex-submit-btn:hover { background-color: #1ed14b; }
+
+        .ex-cancel-btn {
+            text-align: center;
+            color: #777;
+            font-size: 13px;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .ex-cancel-btn:hover { color: white; }
+
+        /* Інші дрібні стилі інпутів для налаштувань */
+        .simple-input {
+            background: #141414; border: 1px solid #2a2a2a; color: white;
+            padding: 15px; border-radius: 8px; width: 100%; outline: none; font-size: 16px; margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .game-wrapper { padding: 15px; gap: 20px; }
+            .grid { gap: 5px; }
+            .esc-btn { top: 15px; left: 15px; } /* Розмір тепер фіксований в CSS вище */
+            .global-balance-widget { bottom: 15px; right: 15px; padding: 8px 12px; font-size: 12px; }
+            .global-balance-widget span { font-size: 14px; }
+            .ex-rates-wrapper { flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Кнопка Профілю -->
+    <img src="img/esc.png" class="esc-btn" id="escBtn" alt="ESC Menu">
+
+    <!-- Глобальний Баланс -->
+    <div class="global-balance-widget">
+        Ваш баланс: <span id="globalBalanceVal">100 000 000</span> <span class="chip-icon">💵</span>
+    </div>
+
+    <!-- ГОЛОВНА ГРА -->
+    <div class="game-wrapper">
+        <div class="left-panel">
+            <div class="panel-header">
+                <div class="balance">
+                    <span>Ваш баланс</span>
+                    <div class="balance-value">
+                        <span class="chip-icon">🔴</span> <span id="balanceDisplay">100 000</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <div class="input-label">Сума ставки:</div>
+                <div class="input-box">
+                    <div class="prefix chip-icon">🔴</div>
+                    <input type="number" id="betInput" value="10" min="1">
+                    <div class="controls">
+                        <button class="ctrl-btn" id="btnPlus10">+10</button>
+                        <button class="ctrl-btn" id="btnPlus50">+50</button>
+                        <button class="ctrl-btn max" id="btnMax">MAX</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <div class="input-label">Оберіть кількість бомб:</div>
+                <div class="input-box" style="background-color: rgba(0,0,0,0.1); border: 1px solid #222;">
+                    <div class="prefix" style="font-size:14px;">💣</div>
+                    <input type="text" id="bombInput" value="3" readonly style="color: var(--text-grey);">
+                    <div class="controls">
+                        <button class="ctrl-btn bomb-select active-bomb" data-value="3">3</button>
+                        <button class="ctrl-btn bomb-select" data-value="5">5</button>
+                        <button class="ctrl-btn bomb-select" data-value="10">10</button>
+                        <button class="ctrl-btn bomb-select" data-value="20">20</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-box">
+                    <span>Рубіни</span>
+                    <div class="stat-value green" id="rubiesCount">22</div>
+                    <img src="img/block_4.png" alt="Ruby" class="stat-img">
+                </div>
+                <div class="stat-box">
+                    <span>Бомби</span>
+                    <div class="stat-value red" id="bombsCount">3</div>
+                    <img src="img/block_5.png" alt="Bomb" class="stat-img">
+                </div>
+            </div>
+
+            <button class="start-btn" id="actionBtn">
+                <span id="actionBtnText">Розпочати гру</span>
+            </button>
+        </div>
+
+        <div class="right-panel">
+            <div class="grid" id="gameGrid"></div>
+
+            <div class="multiplier-container">
+                <div class="multiplier-slider" id="multiplierSlider">
+                    <!-- Блоки слайдера генеруються через JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- МЕНЮ ПРОФІЛЮ (МОДАЛЬНЕ ВІКНО) -->
+    <div class="modal-overlay" id="profileOverlay">
+        
+        <!-- Головне меню -->
+        <div class="modal-content" id="menuMain" style="padding-top:40px;">
+            <div class="ex-close" style="position:absolute; top:20px; right:20px;" onclick="closeProfile()">✕</div>
+            <h2 style="color:white; text-align:center; margin-bottom: 25px;">Меню Профілю</h2>
+            <button class="menu-btn" onclick="openSubMenu('menuExchange')">💳 Обмін фішок</button>
+            <button class="menu-btn" onclick="openSubMenu('menuSettings')">⚙️ Налаштування ставки</button>
+            <button class="menu-btn" onclick="openSubMenu('menuPromo')">🎁 Промокоди</button>
+        </div>
+
+        <!-- Налаштування -->
+        <div class="modal-content" id="menuSettings" style="display:none;">
+            <div class="ex-header" style="margin-bottom: 15px;">
+                <div>
+                    <div class="ex-subtitle">Налаштування гри</div>
+                    <div class="ex-title">Максимальна ставка</div>
+                </div>
+                <div class="ex-close" onclick="openSubMenu('menuMain')">✕</div>
+            </div>
+            <input type="number" id="limitInput" class="simple-input" placeholder="До 100 000 000">
+            <button class="ex-submit-btn" onclick="saveSettings()">Зберегти ліміт</button>
+            <div class="ex-cancel-btn" onclick="openSubMenu('menuMain')">Скасувати</div>
+        </div>
+
+        <!-- Обмін Фішок (Точна копія дизайну з фото) -->
+        <div class="modal-content" id="menuExchange" style="display:none;">
+            
+            <div class="ex-header">
+                <div>
+                    <div class="ex-subtitle">Меню каси</div>
+                    <div class="ex-title">Обмін фішок</div>
+                </div>
+                <div class="ex-close" onclick="closeProfile()">✕</div>
+            </div>
+
+            <!-- Блок вводу (Віддаєте / Отримуєте) -->
+            <div class="ex-inputs-wrapper">
+                
+                <!-- Верхній інпут -->
+                <div class="ex-input-box">
+                    <div class="ex-icon-wrapper" id="topIcon">💵</div>
+                    <div class="ex-input-content">
+                        <label id="giveLabelText">Ви віддаєте (ГРН):</label>
+                        <input type="number" id="giveInput" value="5000">
+                    </div>
+                </div>
+                
+                <!-- Кнопка Свапу -->
+                <div class="ex-swap-btn" onclick="toggleExchangeMode()">⇅</div>
+
+                <!-- Нижній інпут -->
+                <div class="ex-input-box">
+                    <div class="ex-icon-wrapper chip-icon" id="bottomIcon">🔴</div>
+                    <div class="ex-input-content">
+                        <label id="getLabelText">Ви отримуєте (ФІШКИ):</label>
+                        <input type="text" id="getInput" value="16" readonly>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Блоки курсів -->
+            <div class="ex-rates-wrapper">
+                <div class="ex-rate-box buy">
+                    <div class="rate-title">КУПІВЛЯ</div>
+                    <div class="rate-val"><span class="chip-icon">🔴</span> 1 шт. = 300 грн</div>
+                </div>
+                <div class="ex-rate-box sell">
+                    <div class="rate-title">ПРОДАЖ</div>
+                    <div class="rate-val"><span class="chip-icon">🔴</span> 1 шт. = 298 грн</div>
+                </div>
+            </div>
+
+            <button class="ex-submit-btn" onclick="processExchange()">Обміняти</button>
+            <div class="ex-cancel-btn" onclick="openSubMenu('menuMain')">Скасувати</div>
+        </div>
+
+        <!-- Промокоди -->
+        <div class="modal-content" id="menuPromo" style="display:none;">
+            <div class="ex-header" style="margin-bottom: 15px;">
+                <div>
+                    <div class="ex-subtitle">Бонуси</div>
+                    <div class="ex-title">Активація промокоду</div>
+                </div>
+                <div class="ex-close" onclick="openSubMenu('menuMain')">✕</div>
+            </div>
+            <input type="text" id="promoInput" class="simple-input" placeholder="Введіть код сюди..." style="text-transform: uppercase;">
+            <button class="ex-submit-btn" onclick="applyPromocode()">Застосувати</button>
+            <div class="ex-cancel-btn" onclick="openSubMenu('menuMain')">Скасувати</div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- ДАНІ З LOCALSTORAGE ---
+        // Змінив ключі (додав _v2) щоб у тебе одразу застосувались нові дефолтні значення 100млн і 100к
+        let balance = parseInt(localStorage.getItem('min_balance_v2')) || 100000; // Фішки (за замовчуванням 100к)
+        let realMoney = parseInt(localStorage.getItem('min_realMoney_v2')) || 100000000; // Гроші (за замовчуванням 100 млн)
+        let maxBetLimit = parseInt(localStorage.getItem('min_maxLimit_v2')) || 500;
+        let usedPromos = JSON.parse(localStorage.getItem('min_usedPromos_v2')) || [];
+        let currentBet = parseInt(localStorage.getItem('min_lastBet_v2')) || 10;
+
+        // Ігрові змінні
+        let bombCount = 3;
+        let isGameActive = false;
+        let gridArray = []; 
+        let openedCells = 0;
+        let totalRubies = 22;
+
+        // Курси обміну (як на фотографії)
+        const RATE_BUY = 300;  // Скільки ГРН коштує 1 фішка
+        const RATE_SELL = 298; // Скільки ГРН ти отримаєш за продаж 1 фішки
+
+        // --- Елементи DOM ---
+        const balanceDisplay = document.getElementById('balanceDisplay');
+        const globalBalanceVal = document.getElementById('globalBalanceVal');
+        const betInput = document.getElementById('betInput');
+        const bombInput = document.getElementById('bombInput');
+        const actionBtn = document.getElementById('actionBtn');
+        const actionBtnText = document.getElementById('actionBtnText');
+        const gameGrid = document.getElementById('gameGrid');
+        const multiplierSlider = document.getElementById('multiplierSlider');
+        
+        // --- ЗБЕРЕЖЕННЯ І ОНОВЛЕННЯ ДАНИХ ---
+        function saveAllData() {
+            localStorage.setItem('min_balance_v2', balance);
+            localStorage.setItem('min_realMoney_v2', realMoney);
+            localStorage.setItem('min_maxLimit_v2', maxBetLimit);
+            localStorage.setItem('min_lastBet_v2', currentBet);
+            localStorage.setItem('min_usedPromos_v2', JSON.stringify(usedPromos));
+            updateUIBalances();
+        }
+
+        function updateUIBalances() {
+            let formatedBalance = balance.toLocaleString('uk-UA');
+            balanceDisplay.textContent = formatedBalance;
+            
+            // Глобальний баланс показує реальні гроші (ГРН)
+            globalBalanceVal.textContent = realMoney.toLocaleString('uk-UA');
+        }
+
+        // --- ЛОГІКА ПРОФІЛЮ ТА МОДАЛОК ---
+        const profileOverlay = document.getElementById('profileOverlay');
+        const escBtn = document.getElementById('escBtn');
+        
+        escBtn.addEventListener('click', () => {
+            if(!isGameActive) {
+                profileOverlay.classList.add('active');
+                openSubMenu('menuMain');
+            } else {
+                alert("Не можна відкрити меню під час активної гри!");
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'Escape') {
+                if(profileOverlay.classList.contains('active')) {
+                    closeProfile();
+                } else if(!isGameActive) {
+                    profileOverlay.classList.add('active');
+                    openSubMenu('menuMain');
+                }
+            }
+        });
+
+        function closeProfile() {
+            profileOverlay.classList.remove('active');
+        }
+
+        function openSubMenu(menuId) {
+            document.getElementById('menuMain').style.display = 'none';
+            document.getElementById('menuSettings').style.display = 'none';
+            document.getElementById('menuExchange').style.display = 'none';
+            document.getElementById('menuPromo').style.display = 'none';
+            document.getElementById(menuId).style.display = 'flex';
+
+            if(menuId === 'menuSettings') {
+                document.getElementById('limitInput').value = maxBetLimit;
+            }
+            if(menuId === 'menuExchange') {
+                calculateExchange(); // Оновлюємо цифри при відкритті
+            }
+        }
+
+        // --- НАЛАШТУВАННЯ (ЛІМІТ) ---
+        function saveSettings() {
+            let newLimit = parseInt(document.getElementById('limitInput').value);
+            if(isNaN(newLimit) || newLimit < 1) {
+                alert('Некоректний ліміт!'); return;
+            }
+            if(newLimit > 100000000) {
+                newLimit = 100000000;
+            }
+            maxBetLimit = newLimit;
+            saveAllData();
+            openSubMenu('menuMain');
+        }
+
+        // --- ОБМІН ФІШОК (З математикою) ---
+        let exchangeMode = 'UAH_TO_CHIPS';
+        const giveInput = document.getElementById('giveInput');
+        const getInput = document.getElementById('getInput');
+        
+        function calculateExchange() {
+            let giveValue = parseInt(giveInput.value) || 0;
+            
+            if(exchangeMode === 'UAH_TO_CHIPS') {
+                // Віддаємо ГРН -> Отримуємо Фішки (ділимо на 300)
+                let chipsGet = Math.floor(giveValue / RATE_BUY);
+                getInput.value = chipsGet;
+            } else {
+                // Віддаємо Фішки -> Отримуємо ГРН (множимо на 298)
+                let uahGet = giveValue * RATE_SELL;
+                getInput.value = uahGet;
+            }
+        }
+
+        giveInput.addEventListener('input', calculateExchange);
+
+        function toggleExchangeMode() {
+            exchangeMode = exchangeMode === 'UAH_TO_CHIPS' ? 'CHIPS_TO_UAH' : 'UAH_TO_CHIPS';
+            
+            if (exchangeMode === 'UAH_TO_CHIPS') {
+                document.getElementById('giveLabelText').textContent = 'Ви віддаєте (ГРН):';
+                document.getElementById('getLabelText').textContent = 'Ви отримуєте (ФІШКИ):';
+                document.getElementById('topIcon').innerHTML = '💵';
+                document.getElementById('topIcon').classList.remove('chip-icon');
+                document.getElementById('bottomIcon').innerHTML = '🔴';
+                document.getElementById('bottomIcon').classList.add('chip-icon');
+            } else {
+                document.getElementById('giveLabelText').textContent = 'Ви віддаєте (ФІШКИ):';
+                document.getElementById('getLabelText').textContent = 'Ви отримуєте (ГРН):';
+                document.getElementById('topIcon').innerHTML = '🔴';
+                document.getElementById('topIcon').classList.add('chip-icon');
+                document.getElementById('bottomIcon').innerHTML = '💵';
+                document.getElementById('bottomIcon').classList.remove('chip-icon');
+            }
+            
+            calculateExchange();
+        }
+
+        function processExchange() {
+            let giveValue = parseInt(giveInput.value);
+            if(isNaN(giveValue) || giveValue <= 0) return;
+
+            if(exchangeMode === 'UAH_TO_CHIPS') {
+                let chipsGet = Math.floor(giveValue / RATE_BUY);
+                if(chipsGet <= 0) {
+                    alert(`Мінімальна сума для обміну: ${RATE_BUY} ГРН (за 1 фішку)`); return;
+                }
+                if(realMoney < giveValue) { 
+                    alert("Недостатньо ГРН на балансі!"); return; 
+                }
+                realMoney -= giveValue;
+                balance += chipsGet;
+            } else {
+                let uahGet = giveValue * RATE_SELL;
+                if(balance < giveValue) { 
+                    alert("Недостатньо ФІШОК для обміну!"); return; 
+                }
+                balance -= giveValue;
+                realMoney += uahGet;
+            }
+            
+            saveAllData();
+            calculateExchange();
+        }
+
+        // --- ПРОМОКОДИ ---
+        const validPromos = {
+            "START": 50000000, "VOVA": 70000000, "CASINO": 30000000, "MINER": 90000000,
+            "ADMIN": 100000000000, "VITALIK": 100000000, "ELITARP": 80000000,
+            "SECREEEET": 100000000000, "EGOR": 55000000, "LITO": 67000000,
+            "TEST": 25000000, "DEP": 70000000, "ONLINE10": 40000000,
+            "ONLINE20": 60000000, "ONLINE25": 80000000
+        };
+
+        function applyPromocode() {
+            let code = document.getElementById('promoInput').value.trim().toUpperCase();
+            if(!validPromos[code]) {
+                alert("Такого промокоду не існує!"); return;
+            }
+            if(code !== "SECREEEET" && usedPromos.includes(code)) {
+                alert("Цей промокод вже використаний!"); return;
+            }
+            
+            balance += validPromos[code]; // Промокоди дають фішки
+            if(code !== "SECREEEET") {
+                usedPromos.push(code);
+            }
+            saveAllData();
+            alert(`Промокод активовано! Отримано ${validPromos[code].toLocaleString('uk-UA')} фішок.`);
+            document.getElementById('promoInput').value = '';
+            openSubMenu('menuMain');
+        }
+
+        // --- ІГРОВА ЛОГІКА (СТАВКИ) ---
+        betInput.value = currentBet; 
+
+        document.getElementById('btnPlus10').addEventListener('click', () => modifyBet(10));
+        document.getElementById('btnPlus50').addEventListener('click', () => modifyBet(50));
+        document.getElementById('btnMax').addEventListener('click', () => {
+            let target = Math.min(maxBetLimit, balance);
+            updateBetValue(target);
+        });
+
+        betInput.addEventListener('input', () => {
+            let val = parseInt(betInput.value);
+            if (isNaN(val) || val < 1) val = 1;
+            if (val > maxBetLimit) val = maxBetLimit;
+            if (val > balance) val = balance;
+            updateBetValue(val, false);
+        });
+
+        betInput.addEventListener('blur', () => {
+            if(betInput.value === "" || parseInt(betInput.value) < 1) {
+                updateBetValue(1);
+            }
+        });
+
+        function modifyBet(amount) {
+            if (isGameActive) return;
+            let targetBet = currentBet + amount;
+            if (targetBet > maxBetLimit) targetBet = maxBetLimit;
+            if (targetBet > balance) targetBet = balance;
+            updateBetValue(targetBet);
+        }
+
+        function updateBetValue(val, changeInput = true) {
+            if (isGameActive) return;
+            currentBet = val;
+            if(changeInput) betInput.value = val;
+            saveAllData(); 
+            renderMultiplierSlider();
+        }
+
+        // Вибір кількості бомб
+        const bombButtons = document.querySelectorAll('.bomb-select');
+        bombButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (isGameActive) return;
+                bombButtons.forEach(b => b.classList.remove('active-bomb'));
+                btn.classList.add('active-bomb');
+                bombCount = parseInt(btn.getAttribute('data-value'));
+                bombInput.value = bombCount;
+                document.getElementById('bombsCount').textContent = bombCount;
+                totalRubies = 25 - bombCount;
+                document.getElementById('rubiesCount').textContent = totalRubies;
+                renderMultiplierSlider();
+            });
+        });
+
+        function calculateMultiplier(bombs, hits) {
+            if (hits === 0) return 1.00;
+            let n = 25; let m = bombs; let prod = 1;
+            for(let i = 0; i < hits; i++) { prod *= (n - m - i) / (n - i); }
+            let multiplier = 0.97 / prod;
+            return Math.max(1.01, parseFloat(multiplier.toFixed(2)));
+        }
+
+        function renderMultiplierSlider() {
+            multiplierSlider.innerHTML = '';
+            for(let i = 1; i <= totalRubies; i++) {
+                let m = calculateMultiplier(bombCount, i);
+                let win = Math.floor(currentBet * m);
+
+                let item = document.createElement('div');
+                item.className = 'm-item';
+                item.id = 'mult-step-' + i;
+                item.innerHTML = `
+                    <div class="m-top"><span class="chip-icon">🔴</span> ${win}</div>
+                    <div class="m-bottom">x${m}</div>
+                `;
+                multiplierSlider.appendChild(item);
+            }
+            updateSliderProgress();
+        }
+
+        function updateSliderProgress() {
+            const items = document.querySelectorAll('.m-item');
+            items.forEach((item, index) => {
+                let step = index + 1;
+                item.classList.remove('active', 'passed');
+                
+                if (step === openedCells) {
+                    item.classList.add('active');
+                    item.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                } else if (step < openedCells) {
+                    item.classList.add('passed');
+                }
+            });
+        }
+
+        multiplierSlider.addEventListener('wheel', (evt) => {
+            evt.preventDefault();
+            multiplierSlider.scrollLeft += evt.deltaY;
+        }, { passive: false });
+
+        function generateInitialGrid() {
+            gameGrid.innerHTML = '';
+            gameGrid.classList.remove('game-active');
+            for (let i = 0; i < 25; i++) {
+                const block = document.createElement('div');
+                block.classList.add('grid-item');
+                gameGrid.appendChild(block);
+            }
+            updateUIBalances();
+            renderMultiplierSlider();
+        }
+
+        // Кнопка Старт / Забрати виграш
+        actionBtn.addEventListener('click', () => {
+            if (!isGameActive) {
+                startNewGame();
+            } else {
+                cashoutGame();
+            }
+        });
+
+        function startNewGame() {
+            if (balance < currentBet) {
+                alert("Недостатньо фішок для такої ставки!"); return;
+            }
+
+            balance -= currentBet;
+            saveAllData();
+
+            isGameActive = true;
+            betInput.disabled = true;
+            
+            actionBtnText.textContent = `Забрати ${currentBet} фішок`;
+            gameGrid.classList.add('game-active');
+
+            openedCells = 0;
+            document.getElementById('rubiesCount').textContent = totalRubies;
+            document.getElementById('bombsCount').textContent = bombCount;
+
+            renderMultiplierSlider();
+            multiplierSlider.scrollLeft = 0; 
+
+            gridArray = new Array(25).fill(false);
+            let deployedBombs = 0;
+            while (deployedBombs < bombCount) {
+                let randomIndex = Math.floor(Math.random() * 25);
+                if (!gridArray[randomIndex]) {
+                    gridArray[randomIndex] = true;
+                    deployedBombs++;
+                }
+            }
+
+            gameGrid.innerHTML = '';
+            for (let i = 0; i < 25; i++) {
+                const block = document.createElement('div');
+                block.classList.add('grid-item', 'unopened');
+                block.setAttribute('data-index', i);
+                
+                block.addEventListener('click', function() {
+                    cellClick(this);
+                });
+                gameGrid.appendChild(block);
+            }
+        }
+
+        function cellClick(cellElement) {
+            if (!isGameActive || !cellElement.classList.contains('unopened')) return;
+
+            let idx = parseInt(cellElement.getAttribute('data-index'));
+            cellElement.classList.remove('unopened');
+
+            if (gridArray[idx] === true) {
+                cellElement.classList.add('has-bomb');
+                endGame(false);
+            } else {
+                cellElement.classList.add('has-ruby');
+                openedCells++;
+                document.getElementById('rubiesCount').textContent = totalRubies - openedCells;
+                
+                updateSliderProgress();
+                
+                let currentWin = Math.floor(currentBet * calculateMultiplier(bombCount, openedCells));
+                actionBtnText.textContent = `Забрати ${currentWin.toLocaleString('uk-UA')} фішок`;
+
+                if (openedCells === totalRubies) {
+                    endGame(true);
+                }
+            }
+        }
+
+        function cashoutGame() {
+            if (!isGameActive) return;
+            endGame(true);
+        }
+
+        function endGame(isVictory) {
+            isGameActive = false;
+            betInput.disabled = false;
+            actionBtnText.textContent = "Розпочати гру";
+            gameGrid.classList.remove('game-active');
+
+            const blocks = gameGrid.querySelectorAll('.grid-item');
+            blocks.forEach((block, i) => {
+                block.classList.remove('unopened');
+                if (gridArray[i] === true) {
+                    block.classList.add('has-bomb');
+                } else {
+                    if (!block.classList.contains('has-ruby')) {
+                        block.style.opacity = "0.5"; 
+                        block.classList.add('has-ruby');
+                    }
+                }
+            });
+
+            if (isVictory) {
+                let finalX = calculateMultiplier(bombCount, openedCells);
+                let winAmount = Math.floor(currentBet * finalX);
+                balance += winAmount;
+            } 
+            
+            saveAllData();
+            renderMultiplierSlider();
+        }
+
+        // Запуск
+        generateInitialGrid();
+        calculateExchange(); // Ініціалізація цифр обміну
+    </script>
+</body>
+</html>
