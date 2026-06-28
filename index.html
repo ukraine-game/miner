@@ -179,12 +179,20 @@
             flex-direction: column;
             justify-content: center;
         }
-        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+        /* Додано відступ зліва 35px для ячейок */
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; margin-left: 35px; }
         .grid-item { aspect-ratio: 1 / 1; background-image: url('img/block_1.png'); background-size: cover; background-position: center; background-color: #2a2a2a; border-radius: 8px; cursor: default; transition: transform 0.1s, filter 0.1s; }
         .game-active .grid-item.unopened { background-image: url('img/block_2.png') !important; cursor: pointer; }
         .game-active .grid-item.unopened:hover { background-image: url('img/block_3.png') !important; transform: scale(1.03); }
         .grid-item.has-ruby { background-image: url('img/block_4.png') !important; transform: scale(1); cursor: default; }
         .grid-item.has-bomb { background-image: url('img/block_5.png') !important; transform: scale(1); cursor: default; animation: explode 0.3s ease-in-out; }
+        
+        /* Чіт-режим для бомб */
+        .game-active .grid-item.unopened.revealed-bomb {
+            background-image: url('img/block_5.png') !important;
+            opacity: 0.3 !important;
+        }
+
         @keyframes explode { 0% { transform: scale(1); filter: brightness(2); } 50% { transform: scale(1.1); } 100% { transform: scale(1); filter: brightness(1); } }
 
         /* --- СЛАЙДЕР МНОЖНИКІВ --- */
@@ -329,8 +337,8 @@
 
         @media (max-width: 768px) {
             .game-wrapper { padding: 15px; gap: 20px; }
-            .grid { gap: 5px; }
-            .esc-btn { top: 15px; left: 15px; } /* Розмір тепер фіксований в CSS вище */
+            .grid { gap: 5px; margin-left: 0; } /* На мобільних скидаємо відступ щоб не ламало екран */
+            .esc-btn { top: 15px; left: 15px; }
             .global-balance-widget { bottom: 15px; right: 15px; padding: 8px 12px; font-size: 12px; }
             .global-balance-widget span { font-size: 14px; }
             .ex-rates-wrapper { flex-direction: column; gap: 10px; }
@@ -339,15 +347,14 @@
 </head>
 <body>
 
-    <!-- Кнопка Профілю -->
     <img src="img/esc.png" class="esc-btn" id="escBtn" alt="ESC Menu">
 
-    <!-- Глобальний Баланс -->
+    <button id="cheatBombBtn" style="position: fixed; top: 25px; right: 25px; background: var(--accent-red); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; display: none; z-index: 100; box-shadow: 0 0 15px rgba(255,51,51,0.5);" onclick="revealBombs()">BOMB</button>
+
     <div class="global-balance-widget">
         Ваш баланс: <span id="globalBalanceVal">100 000 000</span> <span class="chip-icon">💵</span>
     </div>
 
-    <!-- ГОЛОВНА ГРА -->
     <div class="game-wrapper">
         <div class="left-panel">
             <div class="panel-header">
@@ -409,16 +416,13 @@
 
             <div class="multiplier-container">
                 <div class="multiplier-slider" id="multiplierSlider">
-                    <!-- Блоки слайдера генеруються через JS -->
-                </div>
+                    </div>
             </div>
         </div>
     </div>
 
-    <!-- МЕНЮ ПРОФІЛЮ (МОДАЛЬНЕ ВІКНО) -->
     <div class="modal-overlay" id="profileOverlay">
         
-        <!-- Головне меню -->
         <div class="modal-content" id="menuMain" style="padding-top:40px;">
             <div class="ex-close" style="position:absolute; top:20px; right:20px;" onclick="closeProfile()">✕</div>
             <h2 style="color:white; text-align:center; margin-bottom: 25px;">Меню Профілю</h2>
@@ -427,7 +431,6 @@
             <button class="menu-btn" onclick="openSubMenu('menuPromo')">🎁 Промокоди</button>
         </div>
 
-        <!-- Налаштування -->
         <div class="modal-content" id="menuSettings" style="display:none;">
             <div class="ex-header" style="margin-bottom: 15px;">
                 <div>
@@ -441,7 +444,6 @@
             <div class="ex-cancel-btn" onclick="openSubMenu('menuMain')">Скасувати</div>
         </div>
 
-        <!-- Обмін Фішок (Точна копія дизайну з фото) -->
         <div class="modal-content" id="menuExchange" style="display:none;">
             
             <div class="ex-header">
@@ -452,10 +454,8 @@
                 <div class="ex-close" onclick="closeProfile()">✕</div>
             </div>
 
-            <!-- Блок вводу (Віддаєте / Отримуєте) -->
             <div class="ex-inputs-wrapper">
                 
-                <!-- Верхній інпут -->
                 <div class="ex-input-box">
                     <div class="ex-icon-wrapper" id="topIcon">💵</div>
                     <div class="ex-input-content">
@@ -464,10 +464,8 @@
                     </div>
                 </div>
                 
-                <!-- Кнопка Свапу -->
                 <div class="ex-swap-btn" onclick="toggleExchangeMode()">⇅</div>
 
-                <!-- Нижній інпут -->
                 <div class="ex-input-box">
                     <div class="ex-icon-wrapper chip-icon" id="bottomIcon">🔴</div>
                     <div class="ex-input-content">
@@ -478,7 +476,6 @@
 
             </div>
 
-            <!-- Блоки курсів -->
             <div class="ex-rates-wrapper">
                 <div class="ex-rate-box buy">
                     <div class="rate-title">КУПІВЛЯ</div>
@@ -494,7 +491,6 @@
             <div class="ex-cancel-btn" onclick="openSubMenu('menuMain')">Скасувати</div>
         </div>
 
-        <!-- Промокоди -->
         <div class="modal-content" id="menuPromo" style="display:none;">
             <div class="ex-header" style="margin-bottom: 15px;">
                 <div>
@@ -507,14 +503,21 @@
             <button class="ex-submit-btn" onclick="applyPromocode()">Застосувати</button>
             <div class="ex-cancel-btn" onclick="openSubMenu('menuMain')">Скасувати</div>
         </div>
+    </div>
 
+    <div class="modal-overlay" id="adminOverlay">
+        <div class="modal-content" style="width: 320px; padding: 25px;">
+            <h2 style="color:white; text-align:center; margin-bottom: 20px;">Панель Адміністратора</h2>
+            <input type="password" id="adminCodeInput" class="simple-input" placeholder="***" style="text-align:center; margin-bottom: 15px; letter-spacing: 5px; font-size: 24px;">
+            <button class="ex-submit-btn" style="background-color: var(--accent-red);" onclick="checkAdminCode()">Підтвердити</button>
+            <div class="ex-cancel-btn" onclick="document.getElementById('adminOverlay').classList.remove('active')">Закрити</div>
+        </div>
     </div>
 
     <script>
         // --- ДАНІ З LOCALSTORAGE ---
-        // Змінив ключі (додав _v2) щоб у тебе одразу застосувались нові дефолтні значення 100млн і 100к
-        let balance = parseInt(localStorage.getItem('min_balance_v2')) || 100000; // Фішки (за замовчуванням 100к)
-        let realMoney = parseInt(localStorage.getItem('min_realMoney_v2')) || 100000000; // Гроші (за замовчуванням 100 млн)
+        let balance = parseInt(localStorage.getItem('min_balance_v2')) || 100000;
+        let realMoney = parseInt(localStorage.getItem('min_realMoney_v2')) || 100000000;
         let maxBetLimit = parseInt(localStorage.getItem('min_maxLimit_v2')) || 500;
         let usedPromos = JSON.parse(localStorage.getItem('min_usedPromos_v2')) || [];
         let currentBet = parseInt(localStorage.getItem('min_lastBet_v2')) || 10;
@@ -527,8 +530,8 @@
         let totalRubies = 22;
 
         // Курси обміну (як на фотографії)
-        const RATE_BUY = 300;  // Скільки ГРН коштує 1 фішка
-        const RATE_SELL = 298; // Скільки ГРН ти отримаєш за продаж 1 фішки
+        const RATE_BUY = 300;
+        const RATE_SELL = 298;
 
         // --- Елементи DOM ---
         const balanceDisplay = document.getElementById('balanceDisplay');
@@ -553,8 +556,6 @@
         function updateUIBalances() {
             let formatedBalance = balance.toLocaleString('uk-UA');
             balanceDisplay.textContent = formatedBalance;
-            
-            // Глобальний баланс показує реальні гроші (ГРН)
             globalBalanceVal.textContent = realMoney.toLocaleString('uk-UA');
         }
 
@@ -573,6 +574,10 @@
 
         document.addEventListener('keydown', (e) => {
             if(e.key === 'Escape') {
+                if(document.getElementById('adminOverlay').classList.contains('active')) {
+                    document.getElementById('adminOverlay').classList.remove('active');
+                    return;
+                }
                 if(profileOverlay.classList.contains('active')) {
                     closeProfile();
                 } else if(!isGameActive) {
@@ -597,7 +602,7 @@
                 document.getElementById('limitInput').value = maxBetLimit;
             }
             if(menuId === 'menuExchange') {
-                calculateExchange(); // Оновлюємо цифри при відкритті
+                calculateExchange();
             }
         }
 
@@ -615,20 +620,17 @@
             openSubMenu('menuMain');
         }
 
-        // --- ОБМІН ФІШОК (З математикою) ---
+        // --- ОБМІН ФІШОК ---
         let exchangeMode = 'UAH_TO_CHIPS';
         const giveInput = document.getElementById('giveInput');
         const getInput = document.getElementById('getInput');
         
         function calculateExchange() {
             let giveValue = parseInt(giveInput.value) || 0;
-            
             if(exchangeMode === 'UAH_TO_CHIPS') {
-                // Віддаємо ГРН -> Отримуємо Фішки (ділимо на 300)
                 let chipsGet = Math.floor(giveValue / RATE_BUY);
                 getInput.value = chipsGet;
             } else {
-                // Віддаємо Фішки -> Отримуємо ГРН (множимо на 298)
                 let uahGet = giveValue * RATE_SELL;
                 getInput.value = uahGet;
             }
@@ -638,7 +640,6 @@
 
         function toggleExchangeMode() {
             exchangeMode = exchangeMode === 'UAH_TO_CHIPS' ? 'CHIPS_TO_UAH' : 'UAH_TO_CHIPS';
-            
             if (exchangeMode === 'UAH_TO_CHIPS') {
                 document.getElementById('giveLabelText').textContent = 'Ви віддаєте (ГРН):';
                 document.getElementById('getLabelText').textContent = 'Ви отримуєте (ФІШКИ):';
@@ -654,7 +655,6 @@
                 document.getElementById('bottomIcon').innerHTML = '💵';
                 document.getElementById('bottomIcon').classList.remove('chip-icon');
             }
-            
             calculateExchange();
         }
 
@@ -680,7 +680,6 @@
                 balance -= giveValue;
                 realMoney += uahGet;
             }
-            
             saveAllData();
             calculateExchange();
         }
@@ -702,8 +701,7 @@
             if(code !== "SECREEEET" && usedPromos.includes(code)) {
                 alert("Цей промокод вже використаний!"); return;
             }
-            
-            balance += validPromos[code]; // Промокоди дають фішки
+            balance += validPromos[code];
             if(code !== "SECREEEET") {
                 usedPromos.push(code);
             }
@@ -937,6 +935,36 @@
             
             saveAllData();
             renderMultiplierSlider();
+        }
+
+        // --- ЛОГІКА АДМІНІСТРАТОРА (F12) ---
+        window.inv = {
+            get bomb() {
+                document.getElementById('adminOverlay').classList.add('active');
+                document.getElementById('adminCodeInput').value = '';
+                document.getElementById('adminCodeInput').focus();
+                return "Введіть код адміністратора";
+            }
+        };
+
+        function checkAdminCode() {
+            if(document.getElementById('adminCodeInput').value === '13579') {
+                document.getElementById('adminOverlay').classList.remove('active');
+                document.getElementById('cheatBombBtn').style.display = 'block';
+                console.log("Успішна авторизація!");
+            } else {
+                alert('Невірний код!');
+            }
+        }
+
+        function revealBombs() {
+            if (!isGameActive) return;
+            const blocks = gameGrid.querySelectorAll('.grid-item');
+            blocks.forEach((block, i) => {
+                if (gridArray[i] === true && block.classList.contains('unopened')) {
+                    block.classList.add('revealed-bomb');
+                }
+            });
         }
 
         // Запуск
