@@ -179,7 +179,7 @@
             flex-direction: column;
             justify-content: center;
         }
-        /* Додано відступ зліва 35px для ячейок */
+        /* Додано відступ зліва 52px для ячейок */
         .grid { display: grid; grid-template-columns: repeat(5, 80px); gap: 10px; margin-bottom: 20px; margin-left: 52px; }
         .grid-item { aspect-ratio: 1 / 1; background-image: url('img/block_1.png'); background-size: cover; background-position: center; background-color: #2a2a2a; border-radius: 8px; cursor: default; transition: transform 0.1s, filter 0.1s; }
         .game-active .grid-item.unopened { background-image: url('img/block_2.png') !important; cursor: pointer; }
@@ -543,6 +543,20 @@
         const gameGrid = document.getElementById('gameGrid');
         const multiplierSlider = document.getElementById('multiplierSlider');
         
+        // --- ЗВУКИ ---
+        function playSound(type) {
+            let audio;
+            if (type === 'finish') audio = new Audio('sound/finish.mp3');
+            else if (type === 'loss') audio = new Audio('sound/loss.mp3');
+            else if (type === 'diamond') audio = new Audio('sound/low_win.mp3');
+            
+            // Використання new Audio() гарантує, що звуки (особливо low_win.mp3)
+            // можуть грати одночасно і не будуть переривати один одного.
+            if(audio) {
+                audio.play().catch(e => console.log("Sound error: ", e));
+            }
+        }
+
         // --- ЗБЕРЕЖЕННЯ І ОНОВЛЕННЯ ДАНИХ ---
         function saveAllData() {
             localStorage.setItem('min_balance_v2', balance);
@@ -830,6 +844,7 @@
             if (!isGameActive) {
                 startNewGame();
             } else {
+                playSound('finish'); // Звук при натисканні на "Забрати"
                 cashoutGame();
             }
         });
@@ -885,9 +900,11 @@
             cellElement.classList.remove('unopened');
 
             if (gridArray[idx] === true) {
+                playSound('loss'); // Звук бомби
                 cellElement.classList.add('has-bomb');
                 endGame(false);
             } else {
+                playSound('diamond'); // Звук діаманта (перекривається при швидких кліках)
                 cellElement.classList.add('has-ruby');
                 openedCells++;
                 document.getElementById('rubiesCount').textContent = totalRubies - openedCells;
@@ -898,6 +915,7 @@
                 actionBtnText.textContent = `Забрати ${currentWin.toLocaleString('uk-UA')} фішок`;
 
                 if (openedCells === totalRubies) {
+                    playSound('finish'); // Звук при відкритті останньої правильної ячейки
                     endGame(true);
                 }
             }
