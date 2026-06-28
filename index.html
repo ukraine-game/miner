@@ -171,7 +171,7 @@
         .start-btn:hover { background-image: url('img/btn_start_h.png'); filter: brightness(1.1); }
         .start-btn span { color: white; font-size: 15px; font-weight: 700; text-transform: uppercase; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 
-        /* --- ПРАВА ПАНЕЛЬ (ІГРОВЕ ПОЛЕ) --- */
+        /* --- ПРАВА ПАНЕЛЬ --- */
         .right-panel {
             flex: 1 1 400px;
             max-width: 450px;
@@ -187,7 +187,6 @@
         .grid-item.has-ruby { background-image: url('img/block_4.png') !important; transform: scale(1); cursor: default; }
         .grid-item.has-bomb { background-image: url('img/block_5.png') !important; transform: scale(1); cursor: default; animation: explode 0.3s ease-in-out; }
         
-        /* Чіт-режим для бомб */
         .game-active .grid-item.unopened.revealed-bomb {
             background-image: url('img/block_5.png') !important;
             opacity: 0.3 !important;
@@ -196,7 +195,8 @@
         @keyframes explode { 0% { transform: scale(1); filter: brightness(2); } 50% { transform: scale(1.1); } 100% { transform: scale(1); filter: brightness(1); } }
 
         /* --- СЛАЙДЕР МНОЖНИКІВ --- */
-        .multiplier-container { background-color: rgba(0,0,0,0.3); border-radius: var(--border-radius); padding: 5px; display: flex; align-items: center; }
+        /* Додано зміщення вправо на 80px */
+        .multiplier-container { background-color: rgba(0,0,0,0.3); border-radius: var(--border-radius); padding: 5px; display: flex; align-items: center; margin-left: 80px; }
         .multiplier-slider { display: flex; overflow-x: auto; scroll-behavior: smooth; width: 100%; gap: 5px; padding: 5px; cursor: grab; -ms-overflow-style: none; scrollbar-width: none; }
         .multiplier-slider::-webkit-scrollbar { display: none; }
         .m-item { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 15px; border-radius: 8px; opacity: 0.4; transition: 0.3s ease; min-width: 75px; }
@@ -205,7 +205,7 @@
         .m-top { font-size: 14px; font-weight: 700; color: white; display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
         .m-bottom { font-size: 11px; color: var(--text-grey); }
 
-        /* --- ОВЕРЛЕЙ ПРОФІЛЮ (РОЗМИТТЯ) --- */
+        /* --- ОВЕРЛЕЙ ПРОФІЛЮ --- */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -372,6 +372,7 @@
         @media (max-width: 768px) {
             .game-wrapper { padding: 15px; gap: 20px; }
             .grid { gap: 5px; margin-left: 0; } 
+            .multiplier-container { margin-left: 0; } /* Скидаємо зміщення на мобільних */
             .esc-btn { top: 15px; left: 15px; }
             .global-balance-widget { bottom: 15px; right: 15px; padding: 8px 12px; font-size: 12px; }
             .global-balance-widget span { font-size: 14px; }
@@ -451,14 +452,12 @@
             <div class="grid" id="gameGrid"></div>
 
             <div class="multiplier-container">
-                <div class="multiplier-slider" id="multiplierSlider">
-                    </div>
+                <div class="multiplier-slider" id="multiplierSlider"></div>
             </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="profileOverlay">
-        
         <div class="modal-content" id="menuMain" style="padding-top:40px;">
             <div class="ex-close" style="position:absolute; top:20px; right:20px;" onclick="closeProfile()">✕</div>
             <h2 style="color:white; text-align:center; margin-bottom: 25px;">Меню Профілю</h2>
@@ -481,7 +480,6 @@
         </div>
 
         <div class="modal-content" id="menuExchange" style="display:none;">
-            
             <div class="ex-header">
                 <div>
                     <div class="ex-subtitle">Меню каси</div>
@@ -491,7 +489,6 @@
             </div>
 
             <div class="ex-inputs-wrapper">
-                
                 <div class="ex-input-box">
                     <div class="ex-icon-wrapper" id="topIcon">💵</div>
                     <div class="ex-input-content">
@@ -509,7 +506,6 @@
                         <input type="text" id="getInput" value="16" readonly>
                     </div>
                 </div>
-
             </div>
 
             <div class="ex-rates-wrapper">
@@ -565,7 +561,7 @@
         let openedCells = 0;
         let totalRubies = 22;
 
-        // Змінні для серій перемог/поразок
+        // Серії перемог / поразок
         let winStreak = 0;
         let lossStreak = 0;
 
@@ -592,13 +588,11 @@
             toast.textContent = text;
             container.appendChild(toast);
 
-            // Анімація появи
             setTimeout(() => toast.classList.add('show'), 50);
 
-            // Анімація зникнення
             setTimeout(() => {
                 toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 500); // Видалення з DOM після анімації
+                setTimeout(() => toast.remove(), 500);
             }, duration);
         }
 
@@ -823,7 +817,6 @@
             renderMultiplierSlider();
         }
 
-        // Вибір кількості бомб
         const bombButtons = document.querySelectorAll('.bomb-select');
         bombButtons.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -897,7 +890,6 @@
             renderMultiplierSlider();
         }
 
-        // Кнопка Старт / Забрати виграш
         actionBtn.addEventListener('click', () => {
             if (!isGameActive) {
                 startNewGame();
@@ -1008,7 +1000,6 @@
                 let winAmount = Math.floor(currentBet * finalX);
                 balance += winAmount;
 
-                // Перевірка серії перемог
                 winStreak++;
                 lossStreak = 0;
                 if (winStreak === 10) {
@@ -1016,7 +1007,6 @@
                     winStreak = 0; 
                 }
             } else {
-                // Перевірка серії поразок
                 lossStreak++;
                 winStreak = 0;
                 if (lossStreak === 7) {
@@ -1064,7 +1054,7 @@
         setTimeout(() => {
             showNotification("Агов! Ви вже дуже довго граєте у казино! Не бажаєте перепочити?", 10000, 'normal');
             playSound('text');
-        }, 30 * 60 * 1000); // 30 хвилин у мілісекундах
+        }, 30 * 60 * 1000); 
 
         // Запуск
         generateInitialGrid();
