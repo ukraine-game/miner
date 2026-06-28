@@ -38,13 +38,13 @@
             padding: 20px;
         }
 
-        /* Кнопка ESC у лівому верхньому куті (виправлено розмір) */
+        /* Кнопка ESC у лівому верхньому куті */
         .esc-btn {
             position: fixed;
             top: 25px;
             left: 25px;
-            width: 118px; /* Правильна ширина */
-            height: 18px; /* Правильна висота */
+            width: 118px; 
+            height: 18px; 
             cursor: pointer;
             z-index: 50;
             transition: transform 0.2s;
@@ -116,7 +116,7 @@
             color: var(--text-grey); 
             text-transform: uppercase; 
             letter-spacing: 1px; 
-            margin-bottom: 6px; /* Піднято текст трохи вище */
+            margin-bottom: 6px; 
         }
         .balance-value { display: flex; align-items: center; justify-content: flex-end; gap: 5px; font-size: 20px; font-weight: 700; }
         .chip-icon { color: var(--accent-red); font-size: 16px; }
@@ -179,7 +179,7 @@
             flex-direction: column;
             justify-content: center;
         }
-        /* Додано відступ зліва 52px для ячейок */
+        
         .grid { display: grid; grid-template-columns: repeat(5, 80px); gap: 10px; margin-bottom: 20px; margin-left: 52px; }
         .grid-item { aspect-ratio: 1 / 1; background-image: url('img/block_1.png'); background-size: cover; background-position: center; background-color: #2a2a2a; border-radius: 8px; cursor: default; transition: transform 0.1s, filter 0.1s; }
         .game-active .grid-item.unopened { background-image: url('img/block_2.png') !important; cursor: pointer; }
@@ -219,7 +219,7 @@
         .modal-overlay.active { display: flex; }
         
         .modal-content {
-            background: #1c1c1c; /* Темно-сірий колір як на фото */
+            background: #1c1c1c; 
             border-radius: 12px;
             width: 440px;
             max-width: 95%;
@@ -236,7 +236,6 @@
         }
         .menu-btn:hover { background: #333; }
         
-        /* Специфічні стилі меню як на скріншоті */
         .ex-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; }
         .ex-subtitle { color: #888; font-size: 12px; margin-bottom: 5px; }
         .ex-title { font-size: 22px; font-weight: 600; color: white; }
@@ -266,7 +265,6 @@
             font-size: 20px; font-weight: 700; outline: none; width: 100%; 
         }
         
-        /* Кругла кнопка обміну між блоками */
         .ex-swap-btn {
             position: absolute;
             top: 50%;
@@ -275,7 +273,7 @@
             width: 38px;
             height: 38px;
             background: #333;
-            border: 3px solid #1c1c1c; /* Колір фону модалки щоб зімітувати розрив */
+            border: 3px solid #1c1c1c; 
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -288,7 +286,6 @@
         }
         .ex-swap-btn:hover { background: #444; color: white; }
 
-        /* Блоки Купівля / Продаж */
         .ex-rates-wrapper { display: flex; gap: 15px; margin-bottom: 30px; }
         .ex-rate-box { 
             flex: 1; padding: 15px; border-radius: 8px; border: 1px solid transparent; 
@@ -329,15 +326,52 @@
         }
         .ex-cancel-btn:hover { color: white; }
 
-        /* Інші дрібні стилі інпутів для налаштувань */
         .simple-input {
             background: #141414; border: 1px solid #2a2a2a; color: white;
             padding: 15px; border-radius: 8px; width: 100%; outline: none; font-size: 16px; margin-bottom: 20px;
         }
 
+        /* --- СИСТЕМА СПОВІЩЕНЬ --- */
+        .notification-container {
+            position: fixed;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            pointer-events: none;
+            width: 90%;
+            max-width: 450px;
+        }
+        .notification-toast {
+            background: rgba(20, 20, 20, 0.95);
+            border: 2px solid #333;
+            color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            opacity: 0;
+            transform: translateY(-20px) scale(0.95);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            line-height: 1.4;
+        }
+        .notification-toast.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            border-color: var(--accent-green);
+        }
+        .notification-toast.loss-reward {
+            border-color: var(--accent-red);
+        }
+
         @media (max-width: 768px) {
             .game-wrapper { padding: 15px; gap: 20px; }
-            .grid { gap: 5px; margin-left: 0; } /* На мобільних скидаємо відступ щоб не ламало екран */
+            .grid { gap: 5px; margin-left: 0; } 
             .esc-btn { top: 15px; left: 15px; }
             .global-balance-widget { bottom: 15px; right: 15px; padding: 8px 12px; font-size: 12px; }
             .global-balance-widget span { font-size: 14px; }
@@ -354,6 +388,8 @@
     <div class="global-balance-widget">
         Ваш баланс: <span id="globalBalanceVal">100 000 000</span> <span class="chip-icon">💵</span>
     </div>
+
+    <div id="notificationContainer" class="notification-container"></div>
 
     <div class="game-wrapper">
         <div class="left-panel">
@@ -529,7 +565,11 @@
         let openedCells = 0;
         let totalRubies = 22;
 
-        // Курси обміну (як на фотографії)
+        // Змінні для серій перемог/поразок
+        let winStreak = 0;
+        let lossStreak = 0;
+
+        // Курси обміну
         const RATE_BUY = 300;
         const RATE_SELL = 298;
 
@@ -543,15 +583,33 @@
         const gameGrid = document.getElementById('gameGrid');
         const multiplierSlider = document.getElementById('multiplierSlider');
         
+        // --- СПОВІЩЕННЯ НА ЕКРАНІ ---
+        function showNotification(text, duration = 7000, type = 'normal') {
+            const container = document.getElementById('notificationContainer');
+            const toast = document.createElement('div');
+            toast.className = 'notification-toast';
+            if (type === 'loss') toast.classList.add('loss-reward');
+            toast.textContent = text;
+            container.appendChild(toast);
+
+            // Анімація появи
+            setTimeout(() => toast.classList.add('show'), 50);
+
+            // Анімація зникнення
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 500); // Видалення з DOM після анімації
+            }, duration);
+        }
+
         // --- ЗВУКИ ---
         function playSound(type) {
             let audio;
             if (type === 'finish') audio = new Audio('sound/finish.mp3');
             else if (type === 'loss') audio = new Audio('sound/loss.mp3');
             else if (type === 'diamond') audio = new Audio('sound/low_win.mp3');
+            else if (type === 'text') audio = new Audio('sound/text.mp3');
             
-            // Використання new Audio() гарантує, що звуки (особливо low_win.mp3)
-            // можуть грати одночасно і не будуть переривати один одного.
             if(audio) {
                 audio.play().catch(e => console.log("Sound error: ", e));
             }
@@ -844,7 +902,7 @@
             if (!isGameActive) {
                 startNewGame();
             } else {
-                playSound('finish'); // Звук при натисканні на "Забрати"
+                playSound('finish'); 
                 cashoutGame();
             }
         });
@@ -900,11 +958,11 @@
             cellElement.classList.remove('unopened');
 
             if (gridArray[idx] === true) {
-                playSound('loss'); // Звук бомби
+                playSound('loss'); 
                 cellElement.classList.add('has-bomb');
                 endGame(false);
             } else {
-                playSound('diamond'); // Звук діаманта (перекривається при швидких кліках)
+                playSound('diamond'); 
                 cellElement.classList.add('has-ruby');
                 openedCells++;
                 document.getElementById('rubiesCount').textContent = totalRubies - openedCells;
@@ -915,7 +973,7 @@
                 actionBtnText.textContent = `Забрати ${currentWin.toLocaleString('uk-UA')} фішок`;
 
                 if (openedCells === totalRubies) {
-                    playSound('finish'); // Звук при відкритті останньої правильної ячейки
+                    playSound('finish'); 
                     endGame(true);
                 }
             }
@@ -949,7 +1007,24 @@
                 let finalX = calculateMultiplier(bombCount, openedCells);
                 let winAmount = Math.floor(currentBet * finalX);
                 balance += winAmount;
-            } 
+
+                // Перевірка серії перемог
+                winStreak++;
+                lossStreak = 0;
+                if (winStreak === 10) {
+                    showNotification("10 Виграшів підряд??? Чітак чи що???", 7000, 'normal');
+                    winStreak = 0; 
+                }
+            } else {
+                // Перевірка серії поразок
+                lossStreak++;
+                winStreak = 0;
+                if (lossStreak === 7) {
+                    showNotification("Не ростраюйся, бачу ти багато раз програв. Тут тобі +30кк фішок від Володьки))", 7000, 'loss');
+                    balance += 30000000;
+                    lossStreak = 0;
+                }
+            }
             
             saveAllData();
             renderMultiplierSlider();
@@ -985,9 +1060,15 @@
             });
         }
 
+        // --- ТАЙМЕР НА 30 ХВИЛИН ---
+        setTimeout(() => {
+            showNotification("Агов! Ви вже дуже довго граєте у казино! Не бажаєте перепочити?", 10000, 'normal');
+            playSound('text');
+        }, 30 * 60 * 1000); // 30 хвилин у мілісекундах
+
         // Запуск
         generateInitialGrid();
-        calculateExchange(); // Ініціалізація цифр обміну
+        calculateExchange(); 
     </script>
 </body>
 </html>
